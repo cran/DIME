@@ -6,9 +6,6 @@ function (data, obj,resolution=10,xlab=NULL,ylab=NULL,main=NULL,pch=NULL, ...)
     r <- runif(length(x)*resolution);
     y <- apply(matrix(r), 1, inudge.qq.plot.internal, obj);
        len <- length(x);
-   if (len > 3000){
-     x <- quantile(x,seq(0,1,1/(3000-1)));
-   }
    if(is.null(ylab)) ylab="Observations";
    if(is.null(main)) main="QQ-plot";
    if(is.null(pch)) pch="*";

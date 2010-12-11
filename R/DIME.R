@@ -1,15 +1,19 @@
 DIME <-
-function(data, gng.K = 2, gng.weights = NULL, gng.pi = NULL, 
-gng.mu = NULL, gng.sigma = NULL, gng.beta = NULL, gng.tol=1e-5, 
-gng.max.iter=2000, gng.th= NULL, gng.rep = 15, gng.fdr.cutoff = 0.1, 
-gng.sigma.diff.cutoff = NULL, gng.mu.diff.cutoff = NULL,
-inudge.K = 2, inudge.weights = NULL, inudge.pi = NULL, inudge.mu = NULL,
-inudge.sigma = NULL, inudge.tol=1e-5, inudge.max.iter = 2000, inudge.z=NULL,
-inudge.rep = 15, inudge.fdr.cutoff = 0.1, inudge.sigma.diff.cutoff = NULL,
-inudge.mu.diff.cutoff = NULL, 
-nudge.z = NULL, nudge.tol = 1e-5, nudge.max.iter = 2000, nudge.mu = NULL, 
-nudge.sigma = NULL, nudge.rep = 15, nudge.fdr.cutoff = 0.1, nudge.weights=NULL,
-nudge.pi=NULL){
+function(data, avg = NULL, gng.K = 2, gng.weights = NULL,
+  gng.weights.cutoff = -1.345, gng.pi = NULL, 
+  gng.mu = NULL, gng.sigma = NULL, gng.beta = NULL, gng.tol=1e-5, 
+  gng.max.iter=2000, gng.th= NULL, gng.rep = 15, gng.fdr.cutoff = 0.1, 
+  gng.sigma.diff.cutoff = NULL, gng.mu.diff.cutoff = NULL, gng.var.thres=1e2,
+  gng.min.sd = NULL,
+  inudge.K = 2, inudge.weights = NULL, 
+  inudge.weights.cutoff = -1.345, inudge.pi = NULL, inudge.mu = NULL,
+  inudge.sigma = NULL, inudge.tol=1e-5, inudge.max.iter = 2000, inudge.z=NULL,
+  inudge.rep = 15, inudge.fdr.cutoff = 0.1, inudge.sigma.diff.cutoff = NULL,
+  inudge.mu.diff.cutoff = NULL,  inudge.var.thres=1e2, inudge.min.sd = NULL,
+  nudge.z = NULL, nudge.tol = 1e-5, nudge.max.iter = 2000, nudge.mu = NULL, 
+  nudge.sigma = NULL, nudge.rep = 15, nudge.fdr.cutoff = 0.1, 
+  nudge.weights = NULL,
+  nudge.weights.cutoff = -1.345, nudge.pi=NULL){
   
   obs <- unlist(data);
   n <- length(obs);
@@ -40,7 +44,12 @@ nudge.pi=NULL){
       return(cat('Error: Please input values for gng.th matrix
         dim(gng.th)[2] must be = 2\n'));
   }
- if((!is.null(gng.weights)&&is.null(dim(gng.weights)))||
+ if(!is.null(gng.weights)&&is.null(avg)){
+      return(cat('Error: When using weights, please input the mean 
+        (or log intensities) of data\n'));
+ }
+ if((!is.null(gng.weights)&&!is.character(gng.weights)&&
+      is.null(dim(gng.weights)))||
       (!is.null(gng.weights)&&!is.null(dim(gng.weights))&&dim(gng.weights)[2]%%n!= 0)){
       return(cat('Error: Please input values for gng.weights as a matrix whose 
         no. columns = of length(unlist(data))\n'));
@@ -62,7 +71,12 @@ nudge.pi=NULL){
       return(cat('Error: Please input values for inudge.pi as a matrix,
         dim(inudge.pi)[2] must be = (inudge.K+1)\n'));
   }
-  if((!is.null(inudge.weights)&&is.null(dim(inudge.weights)))||
+  if(!is.null(inudge.weights)&&is.null(avg)){
+      return(cat('Error: When using weights, please input the mean 
+        (or log intensities) of data\n'));
+  }
+  if((!is.null(inudge.weights)&&!is.character(inudge.weights)&&
+      is.null(dim(inudge.weights)))||
       (!is.null(inudge.weights)&&!is.null(dim(inudge.weights))&&dim(inudge.weights)[2]%%n!= 0)){
       return(cat('Error: Please input values for inudge.weights as a matrix whose 
         no of columns = length(unlist(data))\n'));
@@ -73,7 +87,7 @@ nudge.pi=NULL){
       return(cat('Error: Please input values for inudge.z as a matrix with no. rows
         = length(unlist(data)) and no. columns = 2. Each row must sum to 1\n'));
   }
-  
+    
   # checking input
   if((!is.null(nudge.mu)&&is.null(dim(nudge.mu)))||
     (!is.null(nudge.mu)&&!is.null(dim(nudge.mu))&&dim(nudge.mu)[2]< 1)){
@@ -90,7 +104,12 @@ nudge.pi=NULL){
       return(cat('Error: Please input values for nudge.pi as a matrix, 
         dim(nudge.pi)[2] must be = 2\n'));
   }
-  if((!is.null(nudge.weights)&&is.null(dim(nudge.weights)))||
+  if(!is.null(nudge.weights)&&is.null(avg)){
+      return(cat('Error: When using weights, please input the mean 
+        (or log intensities) of data\n'));
+  }
+  if((!is.null(nudge.weights)&&!is.character(nudge.weights)&&
+    is.null(dim(nudge.weights)))||
     (!is.null(nudge.weights)&&!is.null(dim(nudge.weights))&&dim(nudge.weights)[2]%%n!= 0)){
       return(cat('Error: Please input values for nudge.weights a matrix whose
         no. columns = length(unlist(data))\n.'));
@@ -111,8 +130,19 @@ nudge.pi=NULL){
             { sigma_i <- NULL;}else{ sigma_i <- abs(nudge.sigma[i,1])}
       if((!is.null(nudge.pi) && i>dim(nudge.pi)[1])||is.null(nudge.pi))
             { pi_i <- NULL;}else{ pi_i <- nudge.pi[i,1]/sum(nudge.pi[i,1])}
-      if((!is.null(nudge.weights) && i>dim(nudge.weights)[1])||is.null(nudge.weights))
-            { weights_i <- NULL;}else{ weights_i <- nudge.weights[i,]}
+      if(!is.null(nudge.weights) && is.character(nudge.weights)){
+      	weights <- match.arg(tolower(nudge.weights),c("lower","upper","full"));
+	       weights_i <- switch(weights,
+			   lower = huber(avg, nudge.weights.cutoff,'lower'),
+			   upper = huber(avg, nudge.weights.cutoff,'upper'),
+			   full = huber(avg, nudge.weights.cutoff,'full'))
+      }
+      if((!is.null(nudge.weights) && !is.character(nudge.weights)
+        && i>dim(nudge.weights)[1]) ||is.null(nudge.weights)){
+          weights_i <- NULL;
+        }else if(!is.character(nudge.weights)){
+          weights_i <- nudge.weights[i,];
+        }
      if(is.null(nudge.z))
             { z_i <- NULL;}else{z_i <- nudge.z}
       nudge <- inudge.fit(obs, K = 1, weights = weights_i, 
@@ -139,15 +169,28 @@ nudge.pi=NULL){
             { th_i <- NULL;}else{ th_i <- gng.th[i,]}
       if((!is.null(gng.pi) && i>dim(gng.pi)[1])||is.null(gng.pi))
             { pi_i <- NULL;}else{ pi_i <- (gng.pi[i,1:(k+2)])/sum(gng.pi[i,1:(k+2)])}
-      if((!is.null(gng.weights) && i>dim(gng.weights)[1])||is.null(gng.weights))
-            { weights_i <- NULL;}else{ weights_i <- gng.weights[i,]}
+      if(!is.null(gng.weights) && is.character(gng.weights)){
+      	weights <- match.arg(tolower(gng.weights),c("lower","upper","full"));
+		    weights_i <- switch(weights,
+			   lower = huber(avg, gng.weights.cutoff,'lower'),
+			   upper = huber(avg, gng.weights.cutoff,'upper'),
+			   full = huber(avg, gng.weights.cutoff,'full'))
+      }      
+      if((!is.null(gng.weights) && !is.character(gng.weights)
+            && i>dim(gng.weights)[1])||is.null(gng.weights)){
+              weights_i <- NULL;
+            }else if( !is.character(gng.weights)){
+              weights_i <- gng.weights[i,]}
       if((!is.null(gng.beta) && i>dim(gng.beta)[1])||is.null(gng.beta))
             { beta_i <- NULL;}else{ beta_i <- gng.beta[i,1:2]}
      gng <- gng.fit(obs, K = k, tol=gng.tol, max.iter=gng.max.iter,
           mu= mu_i, sigma=sigma_i, pi=pi_i, th= th_i, beta=beta_i,
           weights = weights_i);
+      if(is.null(gng.min.sd)) gng.min.sd = 0.1*(sd(obs));
   		# check for AIC = NaN
-  		if(is.nan(gng$BIC) || is.infinite(gng$BIC))	gng$BIC <- (-Inf);
+  		if(is.nan(gng$BIC) || is.infinite(gng$BIC)||
+        (max(gng$sigma)^2/min(gng$sigma)^2) > gng.var.thres ||
+        min(gng$sigma) < gng.min.sd)	gng$BIC <- (-Inf);
   		if (bestGngBIC <= gng$BIC) {
   			bestGng <- gng ;
   			bestGngBIC <- gng$BIC;
@@ -166,15 +209,28 @@ nudge.pi=NULL){
             { sigma_i <- NULL;}else{ sigma_i <- abs(inudge.sigma[i,1:k])}
       if((!is.null(inudge.pi) && i>dim(inudge.pi)[1])||is.null(inudge.pi))
             { pi_i <- NULL;}else{ pi_i <- (inudge.pi[i,1:(k+1)])/sum(inudge.pi[i,1:(k+1)])}
-      if((!is.null(inudge.weights) && i>dim(inudge.weights)[1])||is.null(inudge.weights))
-            { weights_i <- NULL;}else{ weights_i <- inudge.weights[i,]}
+      if(!is.null(inudge.weights) && is.character(inudge.weights)){
+      	 weights <- match.arg(tolower(inudge.weights),c("lower","upper","full"));
+		     weights_i <- switch(weights,
+			   lower = huber(avg, inudge.weights.cutoff,'lower'),
+			   upper = huber(avg, inudge.weights.cutoff,'upper'),
+			   full = huber(avg, inudge.weights.cutoff,'full'))
+      }
+      if((!is.null(inudge.weights) && !is.character(inudge.weights) 
+            && i>dim(inudge.weights)[1])||is.null(inudge.weights)){
+              weights_i <- NULL;
+            }else if(!is.character(inudge.weights)){
+              weights_i <- inudge.weights[i,]
+            }
       if(is.null(inudge.z))
             {z_i <- NULL;}else{ z_i <- inudge.z}
      inudge <- inudge.fit(obs, K = k,  weights = weights_i, pi = pi_i, mu= mu_i,
             sigma=sigma_i, tol=inudge.tol, max.iter=inudge.max.iter, z=z_i);
-
+      if(is.null(inudge.min.sd)) inudge.min.sd = 0.1*(sd(obs));
   		# check for AIC = NaN
-  		if(is.nan(inudge$BIC) || is.infinite(inudge$BIC))	inudge$BIC <- (-Inf);
+  		if(is.nan(inudge$BIC) || is.infinite(inudge$BIC) ||
+      (max(inudge$sigma)^2/min(inudge$sigma)^2) > inudge.var.thres ||
+      min(inudge$sigma) < inudge.min.sd)	inudge$BIC <- (-Inf);
   		if (bestiNudgeBIC <= inudge$BIC) {
   			bestiNudge <- inudge ;
   			bestiNudgeBIC <- inudge$BIC;

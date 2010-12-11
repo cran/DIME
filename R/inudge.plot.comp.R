@@ -28,11 +28,17 @@ if(is.null(xlab)){
 if(is.null(lwd)){
   lwd=2;
 }
+if(is.null(main)){
+  if(obj$name=="iNUDGE"){
+    main="iNUDGE";
+  }else{
+    main="NUDGE";}
+}
 if(new.plot){
-  plot(sobs,d,type="l",col=obj$K+2,lty=obj$K+1,xlim=xlim,ylim=ylim,xlab=xlab,
+  plot(sobs,d,type="l",col=2,lty=obj$K+1,xlim=xlim,ylim=ylim,xlab=xlab,
     ylab=ylab,...);
   }else{
-  lines(sobs,d,type="l",col=obj$K+2,lty=obj$K+1,xlim=xlim,ylim=ylim,xlab=xlab,
+  lines(sobs,d,type="l",col=2,lty=obj$K+1,xlim=xlim,ylim=ylim,xlab=xlab,
     ylab=ylab,lwd=lwd);
 }
 
@@ -41,20 +47,20 @@ cols=NULL;
 ltys = NULL; 
 for (k in sNorm$ix){
   lines(sobs,obj$pi[k+1]*
-    dnorm(sobs,obj$mu[k],obj$sigma[k]),type="l",col=k+1,lty=k,lwd=lwd);
+    dnorm(sobs,obj$mu[k],obj$sigma[k]),type="l",col=k+2,lty=k,lwd=lwd);
   tmp = paste(round(obj$pi[k+1],2), " N(",prettyNum(obj$mu[k],digit=2),", ",
     prettyNum(obj$sigma[k],digit=2),")",sep="");
   if((k+1) %in% obj$diffPiIdx){
     tmp = paste(tmp,"*",sep="");
   }
-    cols = c(cols,k+1);
+    cols = c(cols,k+2);
     ltys = c(ltys,k);
     ti1 <- c(ti1,tmp); 
 }
 
 ti2 = paste(round(obj$pi[1],2)," U(",prettyNum(obj$a,digit=2),",",
   prettyNum(obj$b,digit=2),")*",sep="");  
-cols <- c(cols,obj$K+2);
+cols <- c(cols,2);
 ltys <- c(ltys,obj$K+1);
 
 if (is.null(legpos)){
@@ -69,8 +75,7 @@ if (new.plot){
     legendTi = c(ti1,ti2);
     legend(xleg,yleg,legendTi,col=cols,
       lty=ltys,lwd=rep(lwd,obj$K+2));
-    if(obj$name=="iNUDGE"){title(main="iNUDGE")}else{
-      title(main="NUDGE")}
+    title(main=main)
   }else{
   if(obj$name=="iNUDGE"){
     legendTi = c("iNUDGE",ti1,ti2);

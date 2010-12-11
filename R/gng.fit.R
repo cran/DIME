@@ -1,10 +1,26 @@
 gng.fit <-
-function(data, K = 2, weights = NULL, pi = NULL, mu = NULL,
-sigma = NULL, beta = NULL, tol=1e-5, max.iter=2000,th= NULL)
+function(data, avg = NULL, K = 2, weights = NULL, weights.cutoff = -1.345,
+  pi = NULL, mu = NULL, sigma = NULL, beta = NULL, tol=1e-5, 
+  max.iter=2000, th= NULL)
 {
   x <- unlist(data);
   n <- length(x);		
 	if(is.null(weights)) weights <- rep(1,length(x));
+  if(!is.null(weights) & !is.character(weights) & length(weights)!=length(x)){
+      return(cat('Error: please input weights need to be the same length
+       as data\n'));
+  }
+  if(!is.null(weights) && is.character(weights) && is.null(avg)){
+      return(cat('Error: When using weights, please input the mean 
+        (or log intensities) of data\n'));
+  }
+  if(!is.null(weights) && is.character(weights)){
+    weights <- match.arg(tolower(weights),c("lower","upper","full"));
+	  weights <- switch(weights,
+		lower = huber(avg, weights.cutoff,'lower'),
+		upper = huber(avg, weights.cutoff,'upper'),
+		full = huber(avg, weights.cutoff,'full'))
+  }
         
 	if(K < 1) stop("It is expected that there is at least one normal component; therefore, K needs to be greater than 0.");
 	# let C number of component to be C = K + 2
@@ -87,7 +103,7 @@ phi[,C] <- ENK$pi[C]*(I2)*dexp((x-th2),rate = 1/ENK$beta[2]);
 # summing all columns of phi
 sum1 <- c(phi %*% matrix(rep(1,ncol(phi))));
 
-loglike <- sum(log(sum1));
+loglike <- sum(weights * log(sum1));
 AIC <- loglike - (3*K+3);
 BIC <- 2*loglike - (3*K+3)*log(n);
 

@@ -3,24 +3,34 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
   obj.mu.diff.cutoff=NULL)
 {
   if(!is.null(obj$best)){
-    obj$best <- DIME.classify(data, obj$best, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
-      obj.mu.diff.cutoff=NULL);
-    obj$inudge <- DIME.classify(data, obj$inudge, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
-      obj.mu.diff.cutoff=NULL);
-    obj$gng <- DIME.classify(data, obj$gng, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
-      obj.mu.diff.cutoff=NULL);
-    obj$nudge <- DIME.classify(data, obj$nudge, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
-      obj.mu.diff.cutoff=NULL);
+    obj$best <- DIME.classify(data, obj$best, obj.cutoff = obj.cutoff, 
+      obj.sigma.diff.cutoff = obj.sigma.diff.cutoff, 
+      obj.mu.diff.cutoff = obj.mu.diff.cutoff);
+    obj$inudge <- DIME.classify(data, obj$inudge, obj.cutoff = obj.cutoff,
+      obj.sigma.diff.cutoff = obj.sigma.diff.cutoff,
+      obj.mu.diff.cutoff = obj.mu.diff.cutoff);
+    obj$gng <- DIME.classify(data, obj$gng, obj.cutoff = obj.cutoff,
+      obj.sigma.diff.cutoff = obj.sigma.diff.cutoff,
+      obj.mu.diff.cutoff = obj.mu.diff.cutoff);
+    obj$nudge <- DIME.classify(data, obj$nudge, obj.cutoff = obj.cutoff,
+      obj.sigma.diff.cutoff = obj.sigma.diff.cutoff,
+      obj.mu.diff.cutoff= obj.mu.diff.cutoff);
   }
   else{
     data <- unlist(data);
+    fsigma.diff.in <- TRUE;
+    fmu.diff.in <- TRUE;
     # calculate interquartile region
     iqr <- abs((quantile(data,3/4) - quantile(data,1/4)));
     
-    if(is.null(obj.sigma.diff.cutoff))
+    if(is.null(obj.sigma.diff.cutoff)){
       obj.sigma.diff.cutoff <- NULL;
-    if(is.null(obj.mu.diff.cutoff)) 
-      obj.mu.diff.cutoff <- iqr/0.6745;   
+      fsigma.diff.in <- FALSE;
+      }
+    if(is.null(obj.mu.diff.cutoff)){ 
+      obj.mu.diff.cutoff <- iqr/0.6745;
+      fmu.diff.in <- FALSE;
+      }   
     
     #####################################
     ## Classification for GNG
@@ -33,7 +43,14 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
     
     ## Categorize component based on mean ##
     for (i in 1:length(nonDiffIdx)){
-    	if (abs(obj$mu[nonDiffIdx[i]]) > obj.mu.diff.cutoff)
+      if(!fmu.diff.in){
+        mco <- obj.mu.diff.cutoff;
+      }else if(i <= length(obj.mu.diff.cutoff)){
+        mco <- obj.mu.diff.cutoff[i];
+      }else if(i > length(obj.mu.diff.cutoff)){
+        mco <- obj.mu.diff.cutoff[length(obj.mu.diff.cutoff)];
+      }
+    	if (abs(obj$mu[nonDiffIdx[i]]) > mco)
       {
     	# save index of object to be removed from differential group
     		if (!is.null(idxRem)){
@@ -44,19 +61,29 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
     	}
     }
     # remove index from differential group
-    if (!is.null(idxRem) && length(nonDiffIdx) > length(idxRem)){
+    if (!is.null(idxRem) && length(nonDiffIdx) >= length(idxRem)){
     	nonDiffIdx <- nonDiffIdx[-idxRem];
       # find diffIdx and nonDiffIdx in terms of pi index
       nonDiffPiIdx <- (nonDiffIdx+1);
     }
-    
+    if(length(nonDiffIdx) == 0){
+      cat("Warning: no non-differential component. \n Automatically set",
+        " the component with smallest absolute mean as non-differential component\n");
+      nonDiffIdx <- which(abs(obj$mu)==min(abs(obj$mu)));
+    }
     ## Categorize components based on standard deviation ##
     idxRem <- NULL;
     for (i in 1:length(nonDiffIdx)){
-      obj.sigma.diff.cutoff <- 
-            c(obj.sigma.diff.cutoff,(1.5*abs(iqr)-abs(obj$mu[nonDiffIdx[i]]))/2);
-    	if(abs(obj$sigma[nonDiffIdx[i]]) > 
-        (1.5*abs(iqr)-abs(obj$mu[nonDiffIdx[i]]))/2)
+      if(!fsigma.diff.in){ # sigma.diff.cutoff is NOT inputed by user
+        sco <- (1.5*abs(iqr)-abs(obj$mu[nonDiffIdx[i]]))/2;
+        obj.sigma.diff.cutoff <- c(obj.sigma.diff.cutoff,sco);
+      }else if(i <= length(obj.sigma.diff.cutoff)){
+        # sigma.diff.cutoff input is less than number of non-diff components
+        sco <- obj.sigma.diff.cutoff[i];
+      }else if(i > length(obj.sigma.diff.cutoff)){
+        sco <- obj.sigma.diff.cutoff[length(obj.sigma.diff.cutoff)];
+      }
+    	if(abs(obj$sigma[nonDiffIdx[i]]) > sco)
       {
     	# save index of object to be removed from Non-differential group
     		if (!is.null(idxRem)){
@@ -67,8 +94,13 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
     	}
     }
     # remove index from Non-differential group
-    if (!is.null(idxRem) && length(nonDiffIdx) > length(idxRem)){
+    if (!is.null(idxRem) && length(nonDiffIdx) >= length(idxRem)){
     	nonDiffIdx <- nonDiffIdx[-idxRem];
+    }
+    if(length(nonDiffIdx) == 0){
+      cat("Warning: no non-differential component. \n Automatically set",
+        " the component with smallest sigma as non-differential component\n");
+      nonDiffIdx <- which(obj$sigma==min(obj$sigma));
     }
     # find diffIdx and nonDiffIdx in terms of pi index
     nonDiffPiIdx <- (nonDiffIdx+1);
@@ -110,7 +142,14 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
     
     ## Categorize component based on mean ##
     for (i in 1:length(nonDiffIdx)){
-    	if (abs(obj$mu[nonDiffIdx[i]]) > obj.mu.diff.cutoff)
+      if(!fmu.diff.in){
+        mco <- obj.mu.diff.cutoff;
+      }else if(i<=length(obj.mu.diff.cutoff)){
+        mco <- obj.mu.diff.cutoff[i];
+      }else if(i>length(obj.mu.diff.cutoff)){
+        mco <- obj.mu.diff.cutoff[length(obj.mu.diff.cutoff)];
+      }
+    	if (abs(obj$mu[nonDiffIdx[i]]) > mco)
       {
     	# save index of object to be removed from non-differential group
     		if (!is.null(idxRem)){
@@ -121,17 +160,29 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
     	}
     }
     # remove index from non-differential group
-    if (!is.null(idxRem) && length(nonDiffIdx) > length(idxRem)){
+    if (!is.null(idxRem) && length(nonDiffIdx) >= length(idxRem)){
     	nonDiffIdx <- nonDiffIdx[-idxRem];
+    }
+    if(length(nonDiffIdx) == 0){
+      cat("Warning: no non-differential component. \n Automatically set",
+        " the component with smallest absolute mean as non-differential component\n");
+      nonDiffIdx <- which(abs(obj$mu)==min(abs(obj$mu)));
     }
     
     ## Categorize component based on standard deviation ##
     idxRem <- NULL;
     for (i in 1:length(nonDiffIdx)){
-      obj.sigma.diff.cutoff <- 
-        c(obj.sigma.diff.cutoff,(1.5*abs(iqr)-abs(obj$mu[nonDiffIdx[i]]))/2);
-    	if(abs(obj$sigma[nonDiffIdx[i]]) > 
-        (1.5*abs(iqr)-abs(obj$mu[nonDiffIdx[i]]))/2)
+      if(!fsigma.diff.in){ # sigma.diff.cutoff is NOT inputed by user
+        sco <- (1.5*abs(iqr)-abs(obj$mu[nonDiffIdx[i]]))/2;
+        obj.sigma.diff.cutoff <- c(obj.sigma.diff.cutoff,sco);
+      }else if(i <= length(obj.sigma.diff.cutoff)){
+        # sigma.diff.cutoff input is less than number of non-differential normal
+        sco <- obj.sigma.diff.cutoff[i];
+      }else if(i > length(obj.sigma.diff.cutoff)){
+        sco <- obj.sigma.diff.cutoff[length(obj.sigma.diff.cutoff)];
+      }
+#      cat(fsigma.diff.in," ",sco,"\n");
+    	if(abs(obj$sigma[nonDiffIdx[i]]) > sco)
       {
     	# save index of object to be removed from Non-differential group
     		if (!is.null(idxRem)){
@@ -142,8 +193,13 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
     	}
     }
     # remove index from Non-differential group
-    if (!is.null(idxRem) && length(nonDiffIdx) > length(idxRem)){
+    if (!is.null(idxRem) && length(nonDiffIdx) >= length(idxRem)){
     	nonDiffIdx <- nonDiffIdx[-idxRem];
+    }
+    if(length(nonDiffIdx) == 0){
+      cat("Warning: no non-differential component. \n Automatically set",
+        " the component with smallest sigma as non-differential component\n");
+      nonDiffIdx <- which(obj$sigma==min(obj$sigma));
     }
     # also add the uniform component
     diffIdx <- setdiff(1:(obj$K),nonDiffIdx)
@@ -194,4 +250,3 @@ function(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL,
   }
   return (obj);
 }
-

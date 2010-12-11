@@ -108,7 +108,7 @@ void Estep(double *phiMatrix[], double pi[], int negatives[], int positives[], d
 			pR[(((*lx) * k2) + k)] /= Enumerator[k];	
 		}
 	}
-	free(Enumerator);	//Freeing memeory
+	free(Enumerator);	//Freeing memory
 }
 
 							/*******************************************************
@@ -356,8 +356,9 @@ void *my_malloc(size_t size)
   void *p = malloc(size);
 
   if(p == NULL) {
-    fputs("Out of memory.\n", stderr);
-    exit(EXIT_FAILURE);
+    //fputs("Out of memory.\n", stderr);
+    //exit(EXIT_FAILURE);
+	// do nothing R do not allow exit
   }
 
   return p;

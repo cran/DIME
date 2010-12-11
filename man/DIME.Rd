@@ -12,23 +12,33 @@ This package can also be used to identify differential
 in other high throughput data such as microarray, methylation etc.
 }
 \usage{
-DIME(data, gng.K = 2, gng.weights = NULL, gng.pi = NULL, gng.mu = NULL, 
+DIME(data, avg = NULL, gng.K = 2, gng.weights = NULL, gng.weights.cutoff= -1.345,
+  gng.pi = NULL, gng.mu = NULL, 
   gng.sigma = NULL, gng.beta = NULL, gng.tol = 1e-05, gng.max.iter = 2000, 
   gng.th = NULL, gng.rep = 15, gng.fdr.cutoff = 0.1, 
-  gng.sigma.diff.cutoff = NULL, gng.mu.diff.cutoff = NULL,
-  inudge.K = 2, inudge.weights = NULL, inudge.pi = NULL, inudge.mu = NULL,
+  gng.sigma.diff.cutoff = NULL, gng.mu.diff.cutoff = NULL, 
+  gng.var.thres = 1e2, gng.min.sd = NULL,
+  inudge.K = 2, inudge.weights = NULL, inudge.weights.cutoff = -1.345, 
+  inudge.pi = NULL, inudge.mu = NULL,
   inudge.sigma = NULL, inudge.tol = 1e-05, inudge.max.iter = 2000,
   inudge.z = NULL, inudge.rep = 15, inudge.fdr.cutoff = 0.1, 
-  inudge.sigma.diff.cutoff = NULL, inudge.mu.diff.cutoff = NULL,
+  inudge.sigma.diff.cutoff = NULL, inudge.mu.diff.cutoff = NULL, 
+  inudge.var.thres = 1e2, inudge.min.sd = NULL,
   nudge.z = NULL, nudge.tol = 1e-05, nudge.max.iter = 2000, 
   nudge.mu = NULL, nudge.sigma = NULL, nudge.rep = 15, 
-  nudge.fdr.cutoff = 0.1, nudge.weights = NULL, nudge.pi = NULL)
+  nudge.fdr.cutoff = 0.1, nudge.weights = NULL, nudge.weights.cutoff = -1.345, 
+  nudge.pi = NULL)
 }
 \arguments{
   \item{data}{
-an \strong{R list} of vector of normalized intensities (counts). Each element 
+an \strong{R list} of vector of normalized difference (log ratios). Each element 
 can correspond to a particular chromosome. User can construct their own list 
 containing only the chromosome(s) they want to analyze.
+}
+\item{avg}{
+optional \strong{R list} of vector of mean data (or log intensities). 
+Each element can correspond to a particular chromosome in data. 
+Only required when any one of huber weight (lower, upper or full) is selected.
 }
   \item{gng.K}{
 optional maximum number of normal component that will be fitted in GNG model. 
@@ -36,9 +46,17 @@ For example: gng.K=2 will fit a model with 1 and 2 normal components and select
 the best k.
 }
   \item{gng.weights}{
-optional matrix of weights to be used for robust GNG model fitting. 
-Each row is the initial weights to be used in each repetition. Each row must 
-have the same length as data.
+optional weights to be used for robust fitting. Can be a matrix the same 
+  length as data with each row correspond to weights to be used in each 
+  repetition or a character description of the huber-type method to be 
+  employed:
+  "lower" - only value below cutoff are weighted,\\ 
+  "upper" - only value above cutoff are weighted,\\
+  "full"  - both values above and below the cutoff are weighted,\\ 
+  If selected, mean of data (avg) is required. 
+}
+  \item{gng.weights.cutoff}{
+optional cutoff to be used with the Huber weighting scheme.
 }
   \item{gng.pi}{
 optional matrix containing initial estimates for proportion of the GNG mixture 
@@ -86,15 +104,23 @@ and non-differential using GNG mixture.
 optional cut-off for sigma of the normal component in GNG to be declared as 
 representing differential. For example: gng.sigma.diff.cutoff = 2 then if a 
 normal component has sigma > 2 then this component is considered as differential
- component. Default = (1.5*iqr(data)-gng$mu^)/2.
-Where gng$mu^ is mean of non-differential normal components in iNUDGE.
+ component. Default = (1.5*iqr(data)-gng$mu)/2.
+Where gng$mu is mean of non-differential normal components in iNUDGE.
 }
   \item{gng.mu.diff.cutoff}{
 optional cut-off for mu of the normal component in GNG to be declared as 
 representing differential. For example: gng.mu.diff.cutoff = 2 then if a normal 
 component has mean > 2 then this component is considered as differential 
-component. Default = iqr(data)/0.6745
-
+component.
+}
+\item{gng.var.thres}{
+optional threshold to detect huge imbalance in variance. 
+max(gng.variance)/min(gng.variance) <= gng.var.thres.
+}
+\item{gng.min.sd}{
+optional threshold to detect very small sigma. 
+all normal components in GNG model has to have sigma > gng.min.sd.
+Default = 0.1 * sd(data)
 }
   \item{inudge.K}{
 optional maximum number of normal component that will be fitted in iNUDGE model. 
@@ -102,9 +128,19 @@ For example: inudge.K=2 will fit a model with 1 and 2 normal components and sele
 the best k.
 }
   \item{inudge.weights}{
-optional matrix of weights to be used for robust iNUDGE model fitting. 
-Each row is the initial weights to be used in each repetition. Each row must 
-have the same length as data.
+optional weights to be used for robust fitting. Can be a matrix the same 
+  length as data with each row correspond to weights to be used in each 
+  repetition or a character description of the huber-type method to be 
+  employed:
+  "lower" - only value below cutoff are weighted,\\ 
+  "upper" - only value above cutoff are weighted,\\
+  "full"  - both values above and below the cutoff\\ 
+            are weighted, 
+  any other character - "lower" are used (default). \\
+  If selected, mean of data (avg) is required.
+}
+  \item{inudge.weights.cutoff}{
+optional cutoff to be used with the Huber weighting scheme.
 }
   \item{inudge.pi}{
 optional matrix of initial estimates for proportion of the iNUDGE mixture components.
@@ -153,7 +189,16 @@ Where inudge$mu^ is mean of non-differential normal components in iNUDGE.
 optional cut-off for mu of the normal component in GNG to be declared as
 representing differential. For example: gng.mu.diff.cutoff = 2 then if a 
 normal component has mean > 2 then this component is considered as 
-differential component. Default = iqr(data)/0.6745
+differential component.
+}
+\item{inudge.var.thres}{
+optional threshold to detect huge imbalance in variance. 
+max(inudge.variance)/min(inudge.variance) <= inudge.var.thres.
+}
+\item{inudge.min.sd}{
+optional threshold to detect very small sigma. 
+all normal components in iNUDGE model has to have sigma > inudge.min.sd.
+Default = 0.1 * sd(data)
 }
   \item{nudge.z}{
 optional 2-column matrix with each row giving initial estimate of probability of
@@ -187,9 +232,19 @@ optional cut-off for local \emph{fdr} for classifying regions into differential
 and non-differential based on NUDGE mixture.
 }
   \item{nudge.weights}{
-optional vector of weights to be used for robust fitting for NUDGE model. 
-Each row is the initial weights to be used in each repetition. Each row must 
-have the same length as data.
+optional weights to be used for robust fitting. Can be a matrix the same 
+  length as data with each row correspond to weights to be used in each 
+  repetition or a character description of the huber-type method to be 
+  employed:
+  "lower" - only value below cutoff are weighted,\\ 
+  "upper" - only value above cutoff are weighted,\\
+  "full"  - both values above and below the cutoff\\ 
+            are weighted, 
+  any other character - "lower" are used (default). \\
+  If selected, mean of data (avg) is required. 
+}
+  \item{nudge.weights.cutoff}{
+optional cutoff to be used with the Huber weighting scheme.
 }
   \item{nudge.pi}{
 optional initial estimates for proportion of the NUDGE mixture components.

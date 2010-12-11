@@ -6,9 +6,6 @@ if(is.null(resolution)) resolution <- 10;
     r <- runif(length(x)*resolution)
     y <- apply(matrix(r), 1, gng.qq.plot.internal, obj);
    len <- length(x);
-   if (len > 3000){
-     x <- quantile(x,seq(0,1,1/(3000-1)));
-   }
    if(is.null(xlab)) xlab = "GNG";
    if(is.null(ylab)) ylab = "Observations";
    if(is.null(main)) main = "QQ-plot";

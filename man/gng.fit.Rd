@@ -1,6 +1,5 @@
 \name{gng.fit}
 \alias{gng.fit}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Function for Fitting GNG model parameters
 }
@@ -8,21 +7,34 @@ Function for Fitting GNG model parameters
 Function to estimate parameters for GNG model, mixture of exponential and 
 \emph{k}-normal. Parameters are estimated using EM algorithm.}
 \usage{
-gng.fit(data, K = 2, weights = NULL, pi = NULL, mu = NULL, sigma = NULL, 
-beta = NULL, tol = 1e-05, max.iter = 2000, th = NULL)
+gng.fit(data, avg = NULL, K = 2, weights = NULL, weights.cutoff = -1.345, 
+  pi = NULL, mu = NULL, sigma = NULL, beta = NULL, tol = 1e-05, 
+  max.iter = 2000, th = NULL)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{data}{
 an \strong{R list} of vector of normalized intensities (counts). Each element can
  correspond to particular chromosome. User can construct their own list 
  containing only the chromosome(s) they want to analyze.
 }
+\item{avg}{
+optional vector of mean data (or log intensities). Only required when any one
+of huber weight (lower, upper or full) is selected.
+}
   \item{K}{
 optional number of normal component that will be fitted in GNG model.
 }
   \item{weights}{
-optional matrix of weights to be used for robust GNG model fitting. 
+optional weights to be used for robust fitting. Can be a matrix the same 
+  length as data, or a character description of the huber weight method to be 
+  employed:
+  "lower" - only value below weights.cutoff are weighted,\\ 
+  "upper" - only value above weights.cutoff are weighted,\\
+  "full"  - both values above and below weights.cutoff are weighted,\\ 
+  If selected, mean of data (avg) is required. 
+}
+  \item{weights.cutoff}{
+optional cutoff to be used with the Huber weighting scheme.
 }
   \item{pi}{
 optional vector containing initial estimates for proportion of the GNG mixture 
