@@ -1,5 +1,5 @@
-f21f575265d9fd754481d162caa130de *DESCRIPTION
-7873bac4ae25982d737a6ba9e966c852 *NAMESPACE
+2622f5a21cc179a6eacb9d1f0de06789 *DESCRIPTION
+56056bcd60603b91a75efc4f1912fb6a *NAMESPACE
 84b8c344d74477814b618e0af7ff336c *R/DIME.R
 8164d5943c992ded4866f15fd63a92fc *R/DIME.classify.R
 e321b1a39046a51320af88c507ec668a *R/DIME.plot.fit.R
@@ -50,3 +50,4 @@ ef3acef1c694ca12d7b28f8e4d0b671e *man/nudge.plot.comp.Rd
 0ab6efeee89a9e85b047c8908222fffd *man/nudge.plot.mix.Rd
 c43d36c9a72388658e8dd8e3c080ed70 *man/nudge.plot.qq.Rd
 6dde89a40e6e53e3699df67f5418e69f *src/ENE.c
+7c22b1b500cab25872924e218f1645f5 *src/registerDynamicSymbol.c
