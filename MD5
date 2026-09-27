@@ -1,4 +1,4 @@
-2622f5a21cc179a6eacb9d1f0de06789 *DESCRIPTION
+e3e181b6df05858dcb510acff41eb8ab *DESCRIPTION
 56056bcd60603b91a75efc4f1912fb6a *NAMESPACE
 84b8c344d74477814b618e0af7ff336c *R/DIME.R
 8164d5943c992ded4866f15fd63a92fc *R/DIME.classify.R
@@ -25,7 +25,7 @@ c76108f1cf200ad3d78491b8f9f38bdf *R/nudge.plot.fit.R
 8ba66e94d2e2c92e0454a49c9acc67b5 *R/nudge.plot.mix.R
 218ab9d26661ccdc6cba4c2c5dd2be40 *R/nudge.plot.qq.R
 232464768c62c2ac49467098c01e3eb2 *man/DIME-package.Rd
-4621edf7dae5c442b1b5de75ed32166e *man/DIME.Rd
+0878cd25d7e5e45bab84b77ae26a3c02 *man/DIME.Rd
 132b2c3a7235c740899a345ada69cec6 *man/DIME.classify.Rd
 36418291718f97aa4d14211828a4df91 *man/DIME.plot.fit.Rd
 7cebb248a87deb6cce81d318a0eb2edf *man/gng.classify.Rd

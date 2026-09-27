@@ -269,7 +269,7 @@ another list containing the estimated parameters of each model fitted
 correspondingly. "best" lists the model chosen as the best overall model, 
 i.e. if the best model is inudge then best$name = "iNUDGE" and its content 
 is the same as inudge. Thus, depending on the model, the components are:
-\item{name}{the name of the model {"GNG", "iNUDGE","NUDGE"} where
+\item{name}{the name of the model, one of "GNG", "iNUDGE","NUDGE", where
   GNG: normal(k)-exponential (a special case of gamma), iNUDGE: normal(k)-uniform, 
   or NUDGE: normal-uniform models}
 \item{pi}{a vector of estimated proportion of each components in the model}  
